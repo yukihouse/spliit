@@ -219,6 +219,27 @@ container gets its environment.
 
 ## Opt-in features
 
+### Sign-in
+
+Sign-in is disabled unless at least one OAuth provider is configured — nothing else changes: groups are still shared and opened by URL, sign-in is just a foundation for future account-linked features. It is OAuth-only by design, using [Auth.js](https://authjs.dev): there is no password field anywhere, and no email, name, or token is ever written to Postgres. The session is a signed JWT cookie held only in the visitor's browser; the app keeps just the OAuth provider's opaque account id for the duration of that session.
+
+To enable it, register an OAuth app with one or more providers and set:
+
+```.env
+AUTH_SECRET=          # generate with `openssl rand -base64 33`
+AUTH_GOOGLE_ID=
+AUTH_GOOGLE_SECRET=
+AUTH_GITHUB_ID=
+AUTH_GITHUB_SECRET=
+```
+
+You only need the pair for the provider(s) you want to offer. When registering the OAuth app, set its callback URL to:
+
+```
+{BASE_URL}/api/auth/callback/google
+{BASE_URL}/api/auth/callback/github
+```
+
 ### Expense documents
 
 Spliit offers users to upload images (to an AWS S3 bucket) and attach them to expenses. To enable this feature:
