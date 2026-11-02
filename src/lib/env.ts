@@ -172,9 +172,15 @@ const envSchema = z
     // nothing about the user (email, name, tokens) is written to Postgres —
     // Auth.js keeps the session in a signed JWT cookie only, with no adapter
     // configured. Setting either provider's ID/secret pair enables it.
+    // 32 chars is the floor Auth.js itself recommends: shorter secrets make
+    // the signed session JWT easier to brute-force.
     AUTH_SECRET: z.preprocess(
       interpretBlankEnvVarAsUndefined,
-      z.string().trim().optional(),
+      z
+        .string()
+        .trim()
+        .min(32, 'AUTH_SECRET must be at least 32 characters long')
+        .optional(),
     ),
     AUTH_GOOGLE_ID: z.preprocess(
       interpretBlankEnvVarAsUndefined,

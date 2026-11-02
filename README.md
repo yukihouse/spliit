@@ -240,6 +240,8 @@ You only need the pair for the provider(s) you want to offer. When registering t
 {BASE_URL}/api/auth/callback/github
 ```
 
+`AUTH_SECRET` must be at least 32 characters — a shorter one would make the signed session cookie easier to forge; the command above already produces one long enough. Sign-in/callback URLs are built from `BASE_URL`, not from whatever `Host` header a request arrives with, so a reverse proxy in front of a self-hosted instance doesn't need to be trusted to rewrite it.
+
 ### Expense documents
 
 Spliit offers users to upload images (to an AWS S3 bucket) and attach them to expenses. To enable this feature:
