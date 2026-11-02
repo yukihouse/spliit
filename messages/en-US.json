@@ -9,7 +9,9 @@
     }
   },
   "Header": {
-    "groups": "Groups"
+    "groups": "Groups",
+    "signIn": "Sign in",
+    "signOut": "Sign out"
   },
   "Errors": {
     "title": "Something went wrong",

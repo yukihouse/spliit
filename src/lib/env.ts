@@ -168,6 +168,36 @@ const envSchema = z
       interpretBlankEnvVarAsUndefined,
       z.string().optional(),
     ),
+    // Sign-in is opt-in and OAuth-only: no password ever reaches this app, and
+    // nothing about the user (email, name, tokens) is written to Postgres —
+    // Auth.js keeps the session in a signed JWT cookie only, with no adapter
+    // configured. Setting either provider's ID/secret pair enables it.
+    // 32 chars is the floor Auth.js itself recommends: shorter secrets make
+    // the signed session JWT easier to brute-force.
+    AUTH_SECRET: z.preprocess(
+      interpretBlankEnvVarAsUndefined,
+      z
+        .string()
+        .trim()
+        .min(32, 'AUTH_SECRET must be at least 32 characters long')
+        .optional(),
+    ),
+    AUTH_GOOGLE_ID: z.preprocess(
+      interpretBlankEnvVarAsUndefined,
+      z.string().trim().optional(),
+    ),
+    AUTH_GOOGLE_SECRET: z.preprocess(
+      interpretBlankEnvVarAsUndefined,
+      z.string().trim().optional(),
+    ),
+    AUTH_GITHUB_ID: z.preprocess(
+      interpretBlankEnvVarAsUndefined,
+      z.string().trim().optional(),
+    ),
+    AUTH_GITHUB_SECRET: z.preprocess(
+      interpretBlankEnvVarAsUndefined,
+      z.string().trim().optional(),
+    ),
   })
   .superRefine((env, ctx) => {
     // Either spelling enables the feature, so either has to satisfy the
@@ -221,6 +251,33 @@ const envSchema = z
         code: ZodIssueCode.custom,
         message:
           'If ANALYTICS_PROVIDER includes "umami", then UMAMI_WEBSITE_ID must be specified too',
+      })
+    }
+    const enableGoogleAuth = !!(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET)
+    const enableGithubAuth = !!(env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET)
+    if ((enableGoogleAuth || enableGithubAuth) && !env.AUTH_SECRET) {
+      ctx.addIssue({
+        code: ZodIssueCode.custom,
+        message:
+          'If AUTH_GOOGLE_ID/AUTH_GOOGLE_SECRET or AUTH_GITHUB_ID/AUTH_GITHUB_SECRET are set, then AUTH_SECRET must be set too',
+      })
+    }
+    if (
+      (env.AUTH_GOOGLE_ID && !env.AUTH_GOOGLE_SECRET) ||
+      (!env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET)
+    ) {
+      ctx.addIssue({
+        code: ZodIssueCode.custom,
+        message: 'AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET must be set together',
+      })
+    }
+    if (
+      (env.AUTH_GITHUB_ID && !env.AUTH_GITHUB_SECRET) ||
+      (!env.AUTH_GITHUB_ID && env.AUTH_GITHUB_SECRET)
+    ) {
+      ctx.addIssue({
+        code: ZodIssueCode.custom,
+        message: 'AUTH_GITHUB_ID and AUTH_GITHUB_SECRET must be set together',
       })
     }
   })

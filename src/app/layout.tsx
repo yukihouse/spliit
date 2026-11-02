@@ -1,4 +1,6 @@
 import { ApplePwaSplash } from '@/app/apple-pwa-splash'
+import { auth, isAuthEnabled } from '@/auth'
+import { AuthStatus } from '@/components/auth-status'
 import { LocaleSwitcher } from '@/components/locale-switcher'
 import { ProgressBar } from '@/components/progress-bar'
 import { ServiceWorkerRegistration } from '@/components/service-worker-registration'
@@ -11,6 +13,7 @@ import { getAnalyticsConfig } from '@/lib/analytics/config'
 import { effectiveBaseUrl } from '@/lib/env'
 import { TRPCProvider } from '@/trpc/client'
 import type { Metadata, Viewport } from 'next'
+import { SessionProvider } from 'next-auth/react'
 import { NextIntlClientProvider, useTranslations } from 'next-intl'
 import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import Image from 'next/image'
@@ -69,7 +72,13 @@ export const viewport: Viewport = {
   themeColor: '#047857',
 }
 
-function Content({ children }: { children: React.ReactNode }) {
+function Content({
+  children,
+  authEnabled,
+}: {
+  children: React.ReactNode
+  authEnabled: boolean
+}) {
   const t = useTranslations()
   return (
     <TRPCProvider>
@@ -106,6 +115,11 @@ function Content({ children }: { children: React.ReactNode }) {
             <li>
               <ThemeToggle />
             </li>
+            {authEnabled && (
+              <li>
+                <AuthStatus />
+              </li>
+            )}
           </ul>
         </div>
       </header>
@@ -161,6 +175,7 @@ export default async function RootLayout({
   const locale = await getLocale()
   const messages = await getMessages()
   const analyticsConfig = await getAnalyticsConfig()
+  const session = isAuthEnabled ? await auth() : null
   return (
     <html
       lang={locale}
@@ -184,7 +199,13 @@ export default async function RootLayout({
               <Suspense>
                 <ProgressBar />
               </Suspense>
-              <Content>{children}</Content>
+              {isAuthEnabled ? (
+                <SessionProvider session={session}>
+                  <Content authEnabled>{children}</Content>
+                </SessionProvider>
+              ) : (
+                <Content authEnabled={false}>{children}</Content>
+              )}
             </ThemeProvider>
           </Analytics>
         </NextIntlClientProvider>
